@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,10 +23,14 @@ public class HttpHelper {
         StringBuffer sbParams = new StringBuffer();
         if (params != null && params.size() > 0) {
             for (Map.Entry<String, Object> e : params.entrySet()) {
-                sbParams.append(e.getKey());
-                sbParams.append("=");
-                sbParams.append(e.getValue());
-                sbParams.append("&");
+                try {
+                    sbParams.append(URLEncoder.encode(e.getKey(), "UTF-8"));
+                    sbParams.append("=");
+                    sbParams.append(URLEncoder.encode(e.getValue().toString(), "UTF-8"));
+                    sbParams.append("&");
+                } catch(Exception ex) {
+                    ex.printStackTrace();
+                }
             }
         }
         HttpURLConnection con = null;
@@ -53,14 +58,15 @@ public class HttpHelper {
             }
             // 读取返回内容
             resultBuffer = new StringBuffer();
-            int contentLength = Integer.parseInt(con.getHeaderField("Content-Length"));
-            if (contentLength > 0) {
+            // 会有ContentLength不存在的情况
+            // int contentLength = con.getContentLength();
+            // if (contentLength > 0) {
                 br = new BufferedReader(new InputStreamReader(con.getInputStream(), charset));
                 String temp;
                 while ((temp = br.readLine()) != null) {
                     resultBuffer.append(temp);
                 }
-            }
+            // }
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
