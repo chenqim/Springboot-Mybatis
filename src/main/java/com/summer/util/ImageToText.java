@@ -1,13 +1,21 @@
 package com.summer.util;
+import com.summer.model.AccessToken;
 import net.sf.json.JSONObject;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;
 
+@Configuration
+@EnableConfigurationProperties(AccessToken.class)
 public class ImageToText {
 
-    public static String getBaiduAccessToken() {
+    @Autowired
+    private AccessToken accessToken;
+
+    public String getBaiduAccessToken() {
 
         String url = "https://aip.baidubce.com/oauth/2.0/token";
         Map<String, Object> map = new HashMap<>();
@@ -21,13 +29,13 @@ public class ImageToText {
 
     }
 
-    public static StringBuffer imageToText(String filePath) {
+    public StringBuffer imageToText(FileInputStream fis) {
 
         StringBuffer sb = new StringBuffer();
         String url = "https://aip.baidubce.com/rest/2.0/ocr/v1/accurate_basic";
         try {
+            // FileInputStream fis = new FileInputStream(new File(filePath));
             // 将图片转换成byte数组
-            FileInputStream fis = new FileInputStream(new File(filePath));
             byte[] imgData = new byte[fis.available()];
             fis.read(imgData);
             // 将图片进行Base64编码
@@ -36,14 +44,8 @@ public class ImageToText {
             // 将请求参数放入body 请求参数进行URLEncoder
             Map<String, Object> map = new HashMap<>();
             map.put("image", imgStr);
-            // 读取properties配置文件暂时不成功
-            /*Properties properties = new Properties();
-            FileInputStream in = new FileInputStream("com/summer/util/accessToken.properties");
-            properties.load(in);
-            in.close();
-            String accessToken = properties.getProperty("access_token");*/
-            String accessToken = "24.a543e6858cb39b765f21a75977f7b8e7.2592000.1544343065.282335-14740762";
-            String result = HttpHelper.sendPost(url + "?access_token=" + accessToken, map, "UTF-8");
+            String accessTokenStr = accessToken.getAccessToken();
+            String result = HttpHelper.sendPost(url + "?access_token=" + accessTokenStr, map, "UTF-8");
             JSONObject jsonObject = JSONObject.fromObject(result);
             List<Map<String, Object>> list = (List<Map<String, Object>>) jsonObject.get("words_result");
 
@@ -54,15 +56,6 @@ public class ImageToText {
             e.printStackTrace();
         }
         return sb;
-    }
-
-    public static void main(String[] args) {
-
-        // System.out.println(getBaiduAccessToken());
-        // 本地图片路径
-        String filePath = "C:\\Users\\xm\\Desktop\\宁波2.jpg";
-        StringBuffer text = imageToText(filePath);
-        System.out.println(text);
     }
 
 }
